@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Energy Network Visualisations</title>
+	<link rel="stylesheet" href="style.css" />
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&display=swap" rel="stylesheet" />
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+	<script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+	<script src="https://unpkg.com/imagesloaded@4/imagesloaded.pkgd.min.js"></script>
+
+
+	<script src="lib/d3.slider.js"></script>
+</head>
+
+<body>
+	<!--div id="slider"></div-->
+	<!-- to handle js-generated events -->
+	<div id="eventHandler" class="input hidden"></div>
+
+	<div class="grid-container">
+
+		<div id="controls">
+			<h1>Energy Network Visualisations</h1>
+			<p>
+				A collection of visualisations of energy networks. Last updated: 31st December 2024.
+			</p>
+
+			<!-- &#8226; -->
+			<!--a href="" target="_blank"-->
+			<!--Potential Survey Paper (2025)--><!--/a-->
+			<!-- <hr /> -->
+
+			<h2>Select filters:</h2>
+			<span id="count"></span> / <span id="total"></span> techniques
+			(<span href="#" id="showall">show all</span>)
+			<p>
+				Select a category within a task to view results.
+			</p>
+			<div id="filters"></div>
+
+			<p>
+				Select multiple data features to view results.
+			</p>
+
+			<h3>Publication Domain</h3>
+			<div id="filters_pubdata"></div>
+
+			<h3>Specific Visual Elements</h3>
+			<div id="filters_data"></div>
+
+		</div>
+
+		<div id="container" class="grid"></div>
+	</div>
+
+	<script type="text/javascript" src="script.js"></script>
+
+
+
+</body>
+
+</html>
