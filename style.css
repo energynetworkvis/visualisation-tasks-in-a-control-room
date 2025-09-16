@@ -29,7 +29,7 @@ body {
 #container {
 	grid-row: 1;
 	grid-column: 2;
-	margin-left: 20px;
+	margin-left: 40px;
 }
 
 span #count {

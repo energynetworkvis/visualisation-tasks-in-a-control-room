@@ -1,0 +1,116 @@
+/* CSV Table Sidebar Styles */
+
+/* Sidebar backdrop */
+.table-sidebar-backdrop {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Sidebar container */
+.table-sidebar {
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Improve button styling */
+.csv-button {
+    font-family: 'Open Sans', sans-serif !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 12px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.csv-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.csv-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Enhance table styling in sidebar */
+.table-sidebar table {
+    font-family: 'Open Sans', sans-serif;
+}
+
+.table-sidebar th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: #2c3e50;
+}
+
+.table-sidebar td {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.table-sidebar tr:hover td {
+    background-color: #f8f9fa;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+    .table-sidebar {
+        width: 70% !important;
+        right: -70% !important;
+    }
+
+    .table-sidebar.active {
+        right: 0 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .table-sidebar {
+        width: 90% !important;
+        right: -90% !important;
+    }
+
+    .table-sidebar.active {
+        right: 0 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-sidebar {
+        width: 100% !important;
+        right: -100% !important;
+    }
+
+    .table-sidebar.active {
+        right: 0 !important;
+    }
+}
+
+/* Scrollbar styling for sidebar */
+.table-sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.table-sidebar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-sidebar::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.table-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

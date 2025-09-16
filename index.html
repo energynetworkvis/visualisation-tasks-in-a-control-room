@@ -3,8 +3,9 @@
 
 <head>
 	<meta charset="utf-8" />
-	<title>Energy Network Visualisations</title>
+	<title>Energy Network Visualisations in the Control Room</title>
 	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet" href="csv-styles.css" />
 	<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&display=swap" rel="stylesheet" />
 	<script src="https://d3js.org/d3.v5.min.js"></script>
 	<script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
@@ -22,9 +23,10 @@
 	<div class="grid-container">
 
 		<div id="controls">
-			<h1>Energy Network Visualisations</h1>
+			<h1>Energy Network Visualisations in the Control Room</h1>
 			<p>
-				A collection of visualisations of energy networks. Last updated: 31st December 2024.
+				A collection of energy network visualisation research focused for within the control room. Last updated:
+				31st December 2024.
 			</p>
 
 			<!-- &#8226; -->
@@ -32,13 +34,11 @@
 			<!--Potential Survey Paper (2025)--><!--/a-->
 			<!-- <hr /> -->
 
-			<h2>Select filters:</h2>
+			<!-- 			<h2>Select filters:</h2>
 			<span id="count"></span> / <span id="total"></span> techniques
-			(<span href="#" id="showall">show all</span>)
-			<p>
-				Select a category within a task to view results.
-			</p>
-			<div id="filters"></div>
+			(<span href="#" id="showall">show all</span>) -->
+
+			<!-- 			<div id="filters"></div> -->
 
 			<p>
 				Select multiple data features to view results.
@@ -56,6 +56,10 @@
 	</div>
 
 	<script type="text/javascript" src="script.js"></script>
+	<script type="text/javascript" src="csv-handler.js"></script>
+	<script type="text/javascript" src="all-tasks-viewer.js"></script>
+
+
 
 
 
