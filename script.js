@@ -1,80 +1,22 @@
 const url = "energynetworks.csv";
 
 const taxonomy = {
-	//geography_representation: ["mapped", "distorted", "abstract"],
-	//node_representation: ["explicit", "aggregated", "abstract"],
-	//link_representation: ["explicit", "aggregated", "abstract"],
-	//time_representation: ["single_frame", "real-time", "small_multiples", "animation_playback", "time_slider", "integrated"],
-	//time_unit: ["seconds", "minutes", "years", "NA"],
-	//composition: ["juxtaposed", "superimposed", "nested", "integrated"],
-	//interactivity: ["not_required", "required", "interaction_only"],
-	//audience: ["power_engineers", "control_room_operators", "non-experts"]
-	//display_layout: [],
-	//interaction: [],
 	//task: ["identify", "monitor", "analyse"],
-	identify: ["mapped", "distorted", "abstract"],
-	monitor: ["single", "mapped_or_abstract", "multiple"],
-	analyse: ["passive", "exploration", "navigation", "filter_and_focus", "personalisation"]
-
+	//identify: ["mapped", "distorted", "abstract"],
+	//monitor: ["single", "mapped_or_abstract", "multiple"],
+	//analyse: ["passive", "exploration", "navigation", "filter_and_focus", "personalisation"]
 };
 
 const facets = Object.keys(taxonomy);
 
-const datatypes = [
-	// 1/ Links
-	//"directed_links",
-	//"undirected_links",
-	//"weighted_links",
-	//"additional_link_attributes",
-	// "no_additional_link_attributes",
-	//"additional_node_attributes",
-	// 2/ Geolocations
-	//"exact_point_locations",
-	//"area_locations",
-	//"colocated_nodes",
-	// 3/ Density
-	//"dense_networks",
-	//"networks_with_varying_density",
-	// 4/ Dynamic
-	//"dynamic_networks",
-	// 5/ Uncertainty
-	//"uncertain_network_topology",
-	//"uncertain_locations",
-	//"uncertain_additional_attributes",
-	"3D",
-	"animation",
-	"AR",
-	"bar_charts",
-	"box_plots",
-	"chord_diagrams",
-	"colour_hue",
-	"colour_value_or_intensity",
-	"contours",
-	"flow_maps",
-	"glyphs",
-	"histograms",
-	"line_charts",
-	"orientation",
-	"parallel_coordinates",
-	"pie_charts",
-	"radial_charts",
-	"sankey_diagrams",
-	"shape",
-	"size",
-	"tables_and_panels",
-	"texture",
-	"tooltips",
-	"vector_fields",
-	"VE",
-	"VR"
-];
 
-const pubtypes = [
-	"computer_science",
-	"engineering",
-	"physics",
-	"systems",
-	"visualisation"
+const evalmethods = [
+	"Deployed_Systems_(Implicit_Validation)",
+	"Formal_Evaluation_with_Operators",
+	"Formal_Evaluation_without_Operators",
+	"Technical_Validation_Only",
+	"Demonstration/Case_Study",
+	"No_Validation_Reported"
 ]
 
 const container = d3.select(".grid");
@@ -124,41 +66,22 @@ checkboxes
 	.append("span")
 	.text((d) => formatText(d));
 
-// checkboxes for specific data types
+// checkboxes for evaluation methods
 var checkData = d3
-	.select("#filters_data")
+	.select("#filters_eval")
 	.selectAll("div")
-	.data(datatypes)
+	.data(evalmethods)
 	.enter()
 	.append("div");
 checkData
 	.append("input")
 	.attr("type", "checkbox")
 	.attr("class", "input")
-	.attr("id", (d) => "check_" + d)
+	.attr("id", (d) => "check_" + d.replace(/[()\/]/g, '_')) // Replace special chars with underscore
 	.attr("value", (d) => d);
 checkData
 	.append("label")
-	.attr("for", (d) => "check_" + d)
-	.append("span")
-	.text((d) => sentenceCase(d));
-
-// checkboxes for specific pub types
-var checkData = d3
-	.select("#filters_pubdata")
-	.selectAll("div")
-	.data(pubtypes)
-	.enter()
-	.append("div");
-checkData
-	.append("input")
-	.attr("type", "checkbox")
-	.attr("class", "input")
-	.attr("id", (d) => "check_" + d)
-	.attr("value", (d) => d);
-checkData
-	.append("label")
-	.attr("for", (d) => "check_" + d)
+	.attr("for", (d) => "check_" + d.replace(/[()\/]/g, '_')) // Replace special chars with underscore
 	.append("span")
 	.text((d) => sentenceCase(d));
 
@@ -197,28 +120,17 @@ d3.csv(url)
 
 			});
 
-			console.log(filters);
-			console.log(filters[0][1].length);
-			console.log(filters[1][1].length);
-			console.log(filters[2][1].length);
-
-			var dataFilters = datatypes.filter(function (d) {
-				return d3.select("#check_" + d).property("checked");
+			var evalFilters = evalmethods.filter(function (d) {
+				return d3.select("#check_" + d.replace(/[()\/]/g, '_')).property("checked");
 			});
-			//console.log(dataFilters);
-
-			var pubFilters = pubtypes.filter(function (d) {
-				return d3.select("#check_" + d).property("checked");
-			});
-			//console.log(dataFilters);
 
 			// update
-			refreshTechniques(filters, dataFilters, pubFilters);
+			refreshTechniques(filters, evalFilters);
 		});
 
-		function refreshTechniques(filters, dataFilters, pubFilters) {
+		function refreshTechniques(filters, evalFilters) {
 			// filter
-			var fData = data.filter((d) => filterData(d, filters, dataFilters, pubFilters));
+			var fData = data.filter((d) => filterData(d, filters, evalFilters));
 			console.log(fData);
 			// update count in heading
 			d3.select("#count").text(fData.length);
@@ -244,13 +156,13 @@ d3.csv(url)
 		div.append("h2").text((d) => d.Title);
 		div.append("span").html((d) =>
 			[
-				d.Author,
+				d["Author ACM"],
 				". <i>",
 				d["Publication Title"],
 				"</i> (",
 				d["Publication Year"],
 				")",
-				" <a href=" + d.URL + ' target="_blank">[Link]</a>',
+				' <a href="' + encodeURI(d.URL) + '" target="_blank">[Link]</a>',
 				"<br>",
 			].join("")
 		);
@@ -285,7 +197,7 @@ d3.csv(url)
 
 
 
-function filterData(d, filters, dataFilters, pubFilters) {
+function filterData(d, filters, evalFilters) {
 	return (
 		filters.every(function (fil) {
 			// facet: fil[0]
@@ -295,10 +207,13 @@ function filterData(d, filters, dataFilters, pubFilters) {
 			return fil[1].length == 0 || fil[1].indexOf(d[fil[0]]) != -1;
 		}) &&
 
-		dataFilters.every(function (fil) {
-			return d[fil] == "yes";
-		}) &&
-		pubFilters.every(function (fil) {
+		// dataFilters.every(function (fil) {
+		// 	return d[fil] == "yes";
+		// }) &&
+		// pubFilters.every(function (fil) {
+		// 	return d[fil] == "yes";
+		// }) &&
+		evalFilters.every(function (fil) {
 			return d[fil] == "yes";
 		})
 

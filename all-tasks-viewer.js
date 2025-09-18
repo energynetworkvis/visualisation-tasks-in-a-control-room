@@ -5,10 +5,27 @@ class AllTasksViewer {
     constructor() {
         console.log('Creating AllTasksViewer instance');
         this.allTasksData = [];
+        this.fieldTasksData = [];
         this.filteredData = [];
+        this.currentView = 'literature'; // 'literature' or 'field'
         this.sortColumn = null;
         this.sortDirection = 'asc';
         this.filters = {};
+
+        // Default visible columns (without Colour, Shape, Position)
+        this.visibleColumns = new Set([
+            'task_ID',
+            'paper_ID',
+            'User Task',
+            'Task Type (network, geospatial, temporal, neither, all)',
+            'Rule',
+            'Archetype',
+            'Why L1 Action',
+            'Why L2 Action',
+            'What Cat.',
+            'What Subcat.'
+        ]);
+
         // Store bound methods to maintain references
         this.boundApplyFilters = this.applyFilters.bind(this);
         this.boundClearFilters = this.clearFilters.bind(this);
@@ -80,7 +97,7 @@ class AllTasksViewer {
             font-size: 14px;
         `;
 
-        // Create "Observation Tasks" tab
+        // Create "Field Tasks" tab
         const fieldTasksTab = document.createElement('button');
         fieldTasksTab.className = 'tab-button';
         fieldTasksTab.textContent = 'Field Tasks';
@@ -103,7 +120,7 @@ class AllTasksViewer {
         };
 
         allTasksTab.onclick = () => {
-            console.log('All Tasks tab clicked');
+            console.log('Literature Tasks tab clicked');
             this.showAllTasksView();
         };
 
@@ -134,11 +151,14 @@ class AllTasksViewer {
 
     // Show all tasks table view
     async showAllTasksView() {
-        console.log('Showing all tasks view');
+        console.log('Showing literature tasks view');
+
+        this.currentView = 'literature';
 
         // Update tab styles
         if (this.allTasksTab) this.allTasksTab.style.background = '#2c3e50';
         if (this.papersTab) this.papersTab.style.background = '#95a5a6';
+        if (this.fieldTasksTab) this.fieldTasksTab.style.background = '#95a5a6';
 
         // Make sure grid container is still a grid
         const gridContainer = document.querySelector('.grid-container');
@@ -186,9 +206,12 @@ class AllTasksViewer {
 
         // Load data if needed
         if (this.allTasksData.length === 0) {
-            console.log('Loading tasks data...');
+            console.log('Loading literature tasks data...');
             await this.loadAllTasks();
         }
+
+        // Set filtered data to literature tasks
+        this.filteredData = [...this.allTasksData];
 
         // Show table
         this.showTable();
@@ -214,6 +237,95 @@ class AllTasksViewer {
         }
     }
 
+    // Show field tasks view
+    async showFieldTasksView() {
+        console.log('Showing field tasks view');
+
+        this.currentView = 'field';
+
+        // Update tab styles
+        if (this.fieldTasksTab) this.fieldTasksTab.style.background = '#2c3e50';
+        if (this.papersTab) this.papersTab.style.background = '#95a5a6';
+        if (this.allTasksTab) this.allTasksTab.style.background = '#95a5a6';
+
+        // Make sure grid container is still a grid
+        const gridContainer = document.querySelector('.grid-container');
+        if (gridContainer) {
+            gridContainer.style.display = 'grid';
+            console.log('Grid container display:', gridContainer.style.display);
+        }
+
+        // Hide ONLY the papers container
+        const container = document.querySelector('#container');
+        if (container) {
+            container.style.display = 'none';
+            console.log('Papers container hidden');
+        }
+
+        // Hide the filter sections
+        const pubFilters = document.querySelector('#filters_pubdata');
+        if (pubFilters) {
+            pubFilters.style.display = 'none';
+            let prevH3 = pubFilters.previousElementSibling;
+            if (prevH3 && prevH3.tagName === 'H3') {
+                prevH3.style.display = 'none';
+            }
+        }
+
+        const dataFilters = document.querySelector('#filters_data');
+        if (dataFilters) {
+            dataFilters.style.display = 'none';
+            let prevH3 = dataFilters.previousElementSibling;
+            if (prevH3 && prevH3.tagName === 'H3') {
+                prevH3.style.display = 'none';
+            }
+        }
+
+        // Hide the "Select multiple data features" paragraph
+        const controls = document.querySelector('#controls');
+        if (controls) {
+            const paragraphs = controls.querySelectorAll('p');
+            paragraphs.forEach(p => {
+                if (p.textContent.includes('Select multiple')) {
+                    p.style.display = 'none';
+                }
+            });
+        }
+
+        // Load field data if needed - you can change this to load a different CSV
+        if (this.fieldTasksData.length === 0) {
+            console.log('Loading field tasks data...');
+            await this.loadFieldTasks();
+        }
+
+        // Set filtered data to field tasks
+        this.filteredData = [...this.fieldTasksData];
+
+        // Show table
+        this.showTable();
+    }
+
+    // Load field tasks from CSV
+    async loadFieldTasks() {
+        console.log('Loading field tasks...');
+        try {
+            // Load from field_tasks.csv
+            const response = await fetch('field_tasks.csv');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const text = await response.text();
+            this.fieldTasksData = d3.csvParse(text);
+            this.filteredData = [...this.fieldTasksData];
+            console.log(`Loaded ${this.fieldTasksData.length} field tasks`);
+        } catch (error) {
+            console.error('Error loading field tasks:', error);
+            alert('Error loading field tasks data. Make sure field_tasks.csv is in the root directory.');
+            this.fieldTasksData = [];
+            this.filteredData = [];
+        }
+    }
+
     // Show papers grid view
     showPapersView() {
         console.log('Showing papers view');
@@ -221,6 +333,7 @@ class AllTasksViewer {
         // Update tab styles
         if (this.papersTab) this.papersTab.style.background = '#2c3e50';
         if (this.allTasksTab) this.allTasksTab.style.background = '#95a5a6';
+        if (this.fieldTasksTab) this.fieldTasksTab.style.background = '#95a5a6';
 
         // Show the papers container
         const container = document.querySelector('#container');
@@ -272,6 +385,36 @@ class AllTasksViewer {
         }, 100);
     }
 
+    // Get column width based on column type
+    getColumnWidth(col) {
+        const widths = {
+            'task_ID': '30px',
+            'paper_ID': '120px',
+            'User Task': '200px',
+            'Direct Quote from Paper': '300px',
+            'How User Carries Out Task': '300px',
+            'Task Type (network, geospatial, temporal, neither, all)': '80px',
+            'Rule': '40px',
+            'Archetype': '70px',
+            'Why L1 Action': '80px',
+            'Why L2 Action': '80px',
+            'Why L3 Action': '80px',
+            'What Cat.': '90px',
+            'What Subcat.': '90px',
+            'Colour': '80px',
+            'Shape': '80px',
+            'Position': '80px',
+            'Size': '80px',
+            'Orientation': '80px',
+            'Texture': '80px',
+            'Saturation/Luminance': '80px',
+            'Fill (Coverage)': '80px',
+            'Animation': '80px',
+            'Text': '80px'
+        };
+        return widths[col] || '80px';
+    }
+
     // Create and show the table
     showTable() {
         console.log('showTable called');
@@ -300,14 +443,18 @@ class AllTasksViewer {
             }
         }
 
-        // Get unique values for filter dropdowns
-        const uniquePapers = [...new Set(this.allTasksData.map(row => row.paper_ID))].filter(v => v).sort();
-        const uniqueTypes = [...new Set(this.allTasksData.map(row => row['Task Type (network, geospatial, temporal, neither, all)']))].filter(v => v).sort();
-        const uniqueArchetypes = [...new Set(this.allTasksData.map(row => row.Archetype))].filter(v => v).sort();
-        const uniqueWhyL1 = [...new Set(this.allTasksData.map(row => row['Why L1 Action']))].filter(v => v).sort();
-        const uniqueWhyL2 = [...new Set(this.allTasksData.map(row => row['Why L2 Action']))].filter(v => v).sort();
-        const uniqueWhatCat = [...new Set(this.allTasksData.map(row => row['What Cat.']))].filter(v => v).sort();
-        const uniqueWhatSubcat = [...new Set(this.allTasksData.map(row => row['What Subcat.']))].filter(v => v).sort();
+        // Get the appropriate data based on current view
+        const currentData = this.currentView === 'field' ? this.fieldTasksData : this.allTasksData;
+        const tableTitle = this.currentView === 'field' ? 'Field Tasks' : 'Literature Tasks';
+
+        // Get unique values for filter dropdowns from current data source
+        const uniquePapers = [...new Set(currentData.map(row => row.paper_ID))].filter(v => v).sort();
+        const uniqueTypes = [...new Set(currentData.map(row => row['Task Type (network, geospatial, temporal, neither, all)']))].filter(v => v).sort();
+        const uniqueArchetypes = [...new Set(currentData.map(row => row.Archetype))].filter(v => v).sort();
+        const uniqueWhyL1 = [...new Set(currentData.map(row => row['Why L1 Action']))].filter(v => v).sort();
+        const uniqueWhyL2 = [...new Set(currentData.map(row => row['Why L2 Action']))].filter(v => v).sort();
+        const uniqueWhatCat = [...new Set(currentData.map(row => row['What Cat.']))].filter(v => v).sort();
+        const uniqueWhatSubcat = [...new Set(currentData.map(row => row['What Subcat.']))].filter(v => v).sort();
 
         console.log(`Showing ${this.filteredData.length} tasks`);
 
@@ -321,12 +468,56 @@ class AllTasksViewer {
         const currentWhatCatValue = document.getElementById('filter-whatcat')?.value || '';
         const currentWhatSubcatValue = document.getElementById('filter-whatsubcat')?.value || '';
 
+        // Get all available columns from the data
+        const allColumns = currentData.length > 0 ? Object.keys(currentData[0]) : [];
+
+        // Create column selector HTML
+        const columnSelectorHTML = `
+            <div style="background: #e8f4f8; padding: 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #bee5eb;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="margin: 0; color: #2c3e50; font-size: 16px;">Column Selector</h3>
+                    <button id="toggle-columns" style="padding: 6px 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        Show/Hide Columns
+                    </button>
+                </div>
+                <div id="column-selector-content" style="display: none;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; max-height: 200px; overflow-y: auto; padding: 10px; background: white; border-radius: 4px;">
+                        ${allColumns.map(col => {
+            const checked = this.visibleColumns.has(col) ? 'checked' : '';
+            const disabled = col === 'task_ID' || col === 'User Task' || (col === 'paper_ID' && this.currentView !== 'field') ? 'disabled' : '';
+            return `
+                                <label style="display: flex; align-items: center; cursor: pointer; font-size: 12px;">
+                                    <input type="checkbox" 
+                                           class="column-toggle" 
+                                           data-column="${col}" 
+                                           ${checked} 
+                                           ${disabled}
+                                           style="margin-right: 6px;">
+                                    <span style="color: ${disabled ? '#999' : '#333'};">${this.getReadableColumnName(col)}</span>
+                                </label>
+                            `;
+        }).join('')}
+                    </div>
+                    <div style="margin-top: 10px; display: flex; gap: 10px;">
+                        <button id="select-all-columns" style="padding: 6px 12px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            Select All
+                        </button>
+                        <button id="select-default-columns" style="padding: 6px 12px; background: #f39c12; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            Reset to Default
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
         // Table with filters and more columns
         tableContainer.innerHTML = `
         <div style="margin-bottom: 20px;">
             <h2 style="color: #2c3e50; margin: 0 0 20px 0; font-size: 24px;">
-                Visualisation Tasks (${this.filteredData.length} of ${this.allTasksData.length} tasks)
+                ${tableTitle} (${this.filteredData.length} of ${currentData.length} tasks)
             </h2>
+            
+            ${columnSelectorHTML}
             
             <!-- Filter controls -->
             <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
@@ -339,6 +530,7 @@ class AllTasksViewer {
                             style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; color: #333; background-color: white; box-sizing: border-box;">
                     </div>
                     
+                    ${this.currentView !== 'field' ? `
                     <!-- Paper ID Filter -->
                     <div>
                         <label style="display: block; font-size: 11px; font-weight: 600; color: #666; margin-bottom: 4px;">Paper ID</label>
@@ -347,6 +539,7 @@ class AllTasksViewer {
                             ${uniquePapers.map(val => `<option value="${val}" ${val === currentPaperValue ? 'selected' : ''}>${val}</option>`).join('')}
                         </select>
                     </div>
+                    ` : ''}
                     
                     <!-- Task Type Filter -->
                     <div>
@@ -412,44 +605,24 @@ class AllTasksViewer {
         </div>
         
         <!-- Table -->
-        <div style="overflow-x: auto; border: 1px solid #ecf0f1; border-radius: 4px;">
+        <div style="overflow-x: auto; border: 1px solid #ecf0f1; border-radius: 4px; max-width: 100%;">
             <div style="max-height: calc(100vh - 400px); overflow-y: auto;">
-                <table style="width: 100%; border-collapse: collapse; font-family: 'Open Sans', sans-serif; font-size: 13px;">
+                <table style="border-collapse: collapse; font-family: 'Open Sans', sans-serif; font-size: 13px; width: 100%; table-layout: fixed;">
                     <thead>
                         <tr style="background: #2c3e50; color: white; position: sticky; top: 0; z-index: 10;">
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600; white-space: nowrap;">ID</th>
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600; white-space: nowrap;">Paper</th>
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600; min-width: 250px;">User Task</th>
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600; white-space: nowrap;">Type</th>
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600;">Rule</th>
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600;">Archetype</th>
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600;">Why L1</th>
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600;">Why L2</th>
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600;">What Cat</th>
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600;">What Subcat</th>
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600;">Colour</th>
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600;">Shape</th>
-                            <th style="padding: 10px 8px; text-align: left; font-weight: 600;">Position</th>
+                            ${Array.from(this.visibleColumns).map(col => {
+            // Skip paper_ID column for field tasks
+            if (col === 'paper_ID' && this.currentView === 'field') return '';
+
+            const displayName = this.getReadableColumnName(col);
+            const width = this.getColumnWidth(col);
+
+            return `<th style="padding: 10px 8px; text-align: left; font-weight: 600; width: ${width}; word-wrap: break-word; overflow-wrap: break-word;">${displayName}</th>`;
+        }).join('')}
                         </tr>
                     </thead>
-                    <tbody>
-                        ${this.filteredData.length > 0 ? this.filteredData.map((row, index) => `
-                            <tr style="${index % 2 === 0 ? 'background: #fafbfc;' : 'background: white;'}">
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row.task_ID || ''}</td>
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1; font-weight: 500;">${row.paper_ID || ''}</td>
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;" title="${(row['User Task'] || '').replace(/"/g, '&quot;')}">${row['User Task'] || ''}</td>
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row['Task Type (network, geospatial, temporal, neither, all)'] || ''}</td>
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row.Rule || ''}</td>
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row.Archetype || ''}</td>
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row['Why L1 Action'] || ''}</td>
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row['Why L2 Action'] || ''}</td>
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row['What Cat.'] || ''}</td>
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row['What Subcat.'] || ''}</td>
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1; text-align: center;">${this.formatVisualChannel(row.Colour)}</td>
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1; text-align: center;">${this.formatVisualChannel(row.Shape)}</td>
-                                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1; text-align: center;">${this.formatVisualChannel(row.Position)}</td>
-                            </tr>
-                        `).join('') : '<tr><td colspan="13" style="padding: 20px; text-align: center; color: #666;">No tasks found matching filters...</td></tr>'}
+                    <tbody id="table-body">
+                        ${this.generateTableRows()}
                     </tbody>
                 </table>
             </div>
@@ -461,6 +634,141 @@ class AllTasksViewer {
 
         // Add event listeners for filters
         this.attachFilterListeners();
+
+        // Add event listeners for column selector
+        this.attachColumnSelectorListeners();
+    }
+
+    // Generate table rows HTML
+    generateTableRows() {
+        if (this.filteredData.length === 0) {
+            const colCount = this.currentView === 'field' ?
+                this.visibleColumns.size - (this.visibleColumns.has('paper_ID') ? 1 : 0) :
+                this.visibleColumns.size;
+            return `<tr><td colspan="${colCount}" style="padding: 20px; text-align: center; color: #666;">No tasks found matching filters...</td></tr>`;
+        }
+
+        return this.filteredData.map((row, index) => `
+            <tr style="${index % 2 === 0 ? 'background: #fafbfc;' : 'background: white;'}">
+                ${Array.from(this.visibleColumns).map(col => {
+            // Skip paper_ID column for field tasks
+            if (col === 'paper_ID' && this.currentView === 'field') return '';
+
+            const value = row[col] || '';
+            const fontWeight = col === 'paper_ID' ? 'font-weight: 500;' : '';
+            const title = ['User Task', 'Direct Quote from Paper', 'How User Carries Out Task'].includes(col) ?
+                `title="${value.toString().replace(/"/g, '&quot;')}"` : '';
+            const textAlign = ['Colour', 'Shape', 'Position', 'Size', 'Orientation', 'Texture', 'Saturation/Luminance', 'Fill (Coverage)', 'Animation'].includes(col)
+                ? 'text-align: center;' : '';
+            const width = this.getColumnWidth(col);
+
+            // Format visual channel columns
+            const displayValue = ['Colour', 'Shape', 'Position', 'Size', 'Orientation', 'Texture', 'Saturation/Luminance', 'Fill (Coverage)', 'Animation'].includes(col)
+                ? this.formatVisualChannel(value)
+                : value;
+
+            return `<td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1; ${fontWeight} ${textAlign} width: ${width}; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; vertical-align: top;" ${title}>${displayValue}</td>`;
+        }).join('')}
+            </tr>
+        `).join('');
+    }
+
+    // Get readable column names
+    getReadableColumnName(col) {
+        const nameMap = {
+            'task_ID': 'Task ID',
+            'paper_ID': 'Paper ID',
+            'User Task': 'User Task',
+            'Direct Quote from Paper': 'Direct Quote',
+            'Visualisation Tools/Technique': 'Vis Tools/Technique',
+            'How User Carries Out Task': 'How User Carries Out Task',
+            'Task Type (network, geospatial, temporal, neither, all)': 'Task Type',
+            'Geo_Modifier': 'Geo Modifier',
+            'Rule': 'Rule',
+            'Archetype': 'Archetype',
+            'WHY Details': 'Why Details',
+            'Why L1 Action': 'Why L1 Action',
+            'Why L2 Action': 'Why L2 Action',
+            'Why L3 Action': 'Why L3 Action',
+            'Why L1 Target': 'Why L1 Target',
+            'Why L2 Target': 'Why L2 Target',
+            'HOW Encode': 'How Encode',
+            'HOW Manipulate (Interactive)': 'How Manipulate',
+            'HOW Facet (Dashboards/Multiple Views)': 'How Facet',
+            'HOW Reduce (Large datasets)': 'How Reduce',
+            'Animation': 'Animation',
+            'Colour': 'Colour',
+            'Fill (Coverage)': 'Fill (Coverage)',
+            'Orientation': 'Orientation',
+            'Position': 'Position',
+            'Saturation/Luminance': 'Saturation/Luminance',
+            'Shape': 'Shape',
+            'Size': 'Size',
+            'Text': 'Text',
+            'Texture': 'Texture',
+            'What Cat.': 'What Category',
+            'What Subcat.': 'What Subcategory'
+        };
+
+        return nameMap[col] || col;
+    }
+
+    // Attach column selector event listeners
+    attachColumnSelectorListeners() {
+        // Toggle column selector visibility
+        document.getElementById('toggle-columns')?.addEventListener('click', () => {
+            const content = document.getElementById('column-selector-content');
+            if (content) {
+                content.style.display = content.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+
+        // Column checkboxes
+        document.querySelectorAll('.column-toggle').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const column = e.target.dataset.column;
+                if (e.target.checked) {
+                    this.visibleColumns.add(column);
+                } else {
+                    this.visibleColumns.delete(column);
+                }
+                // Rebuild the entire table to update headers and cells
+                this.showTable();
+            });
+        });
+
+        // Select all columns button
+        document.getElementById('select-all-columns')?.addEventListener('click', () => {
+            const currentData = this.currentView === 'field' ? this.fieldTasksData : this.allTasksData;
+            const allColumns = currentData.length > 0 ? Object.keys(currentData[0]) : [];
+
+            allColumns.forEach(col => {
+                if (col !== 'paper_ID' || this.currentView !== 'field') {
+                    this.visibleColumns.add(col);
+                }
+            });
+
+            // Rebuild the entire table
+            this.showTable();
+        });
+
+        // Reset to default columns button
+        document.getElementById('select-default-columns')?.addEventListener('click', () => {
+            this.visibleColumns.clear();
+            this.visibleColumns.add('task_ID');
+            this.visibleColumns.add('paper_ID');
+            this.visibleColumns.add('User Task');
+            this.visibleColumns.add('Task Type (network, geospatial, temporal, neither, all)');
+            this.visibleColumns.add('Rule');
+            this.visibleColumns.add('Archetype');
+            this.visibleColumns.add('Why L1 Action');
+            this.visibleColumns.add('Why L2 Action');
+            this.visibleColumns.add('What Cat.');
+            this.visibleColumns.add('What Subcat.');
+
+            // Rebuild the entire table
+            this.showTable();
+        });
     }
 
     // Format visual channel values
@@ -492,7 +800,9 @@ class AllTasksViewer {
         }
 
         // Individual filters
-        document.getElementById('filter-paper')?.addEventListener('change', this.boundApplyFilters);
+        if (this.currentView !== 'field') {
+            document.getElementById('filter-paper')?.addEventListener('change', this.boundApplyFilters);
+        }
         document.getElementById('filter-type')?.addEventListener('change', this.boundApplyFilters);
         document.getElementById('filter-archetype')?.addEventListener('change', this.boundApplyFilters);
         document.getElementById('filter-whyl1')?.addEventListener('change', this.boundApplyFilters);
@@ -508,8 +818,11 @@ class AllTasksViewer {
     applyFilters() {
         console.log('Applying filters');
 
+        // Get the appropriate data based on current view
+        const currentData = this.currentView === 'field' ? this.fieldTasksData : this.allTasksData;
+
         const searchTerm = document.getElementById('search-all')?.value.toLowerCase() || '';
-        const paperFilter = document.getElementById('filter-paper')?.value || '';
+        const paperFilter = this.currentView !== 'field' ? (document.getElementById('filter-paper')?.value || '') : '';
         const typeFilter = document.getElementById('filter-type')?.value || '';
         const archetypeFilter = document.getElementById('filter-archetype')?.value || '';
         const whyL1Filter = document.getElementById('filter-whyl1')?.value || '';
@@ -517,15 +830,15 @@ class AllTasksViewer {
         const whatCatFilter = document.getElementById('filter-whatcat')?.value || '';
         const whatSubcatFilter = document.getElementById('filter-whatsubcat')?.value || '';
 
-        this.filteredData = this.allTasksData.filter(row => {
+        this.filteredData = currentData.filter(row => {
             // Search all columns
             if (searchTerm) {
                 const rowText = Object.values(row).join(' ').toLowerCase();
                 if (!rowText.includes(searchTerm)) return false;
             }
 
-            // Apply individual filters
-            if (paperFilter && row.paper_ID !== paperFilter) return false;
+            // Apply individual filters (skip paper filter for field tasks)
+            if (this.currentView !== 'field' && paperFilter && row.paper_ID !== paperFilter) return false;
             if (typeFilter && row['Task Type (network, geospatial, temporal, neither, all)'] !== typeFilter) return false;
             if (archetypeFilter && row.Archetype !== archetypeFilter) return false;
             if (whyL1Filter && row['Why L1 Action'] !== whyL1Filter) return false;
@@ -546,37 +859,49 @@ class AllTasksViewer {
         const tableContainer = document.querySelector('#all-tasks-container');
         if (!tableContainer) return;
 
-        const tbody = tableContainer.querySelector('tbody');
-        if (!tbody) return;
+        // Get the appropriate data based on current view
+        const currentData = this.currentView === 'field' ? this.fieldTasksData : this.allTasksData;
+        const tableTitle = this.currentView === 'field' ? 'Field Tasks' : 'Literature Tasks';
 
         // Update count in header
         const header = tableContainer.querySelector('h2');
         if (header) {
-            header.innerHTML = `Visualisation Tasks (${this.filteredData.length} of ${this.allTasksData.length} tasks)`;
+            header.innerHTML = `${tableTitle} (${this.filteredData.length} of ${currentData.length} tasks)`;
         }
 
-        // Update table rows
-        tbody.innerHTML = this.filteredData.length > 0 ? this.filteredData.map((row, index) => `
-            <tr style="${index % 2 === 0 ? 'background: #fafbfc;' : 'background: white;'}">
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row.task_ID || ''}</td>
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1; font-weight: 500;">${row.paper_ID || ''}</td>
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;" title="${(row['User Task'] || '').replace(/"/g, '&quot;')}">${row['User Task'] || ''}</td>
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row['Task Type (network, geospatial, temporal, neither, all)'] || ''}</td>
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row.Rule || ''}</td>
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row.Archetype || ''}</td>
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row['Why L1 Action'] || ''}</td>
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row['Why L2 Action'] || ''}</td>
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row['What Cat.'] || ''}</td>
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1;">${row['What Subcat.'] || ''}</td>
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1; text-align: center;">${this.formatVisualChannel(row.Colour)}</td>
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1; text-align: center;">${this.formatVisualChannel(row.Shape)}</td>
-                <td style="padding: 8px; color: #333; border-bottom: 1px solid #ecf0f1; text-align: center;">${this.formatVisualChannel(row.Position)}</td>
-            </tr>
-        `).join('') : '<tr><td colspan="13" style="padding: 20px; text-align: center; color: #666;">No tasks found matching filters...</td></tr>';
+        // Find the table wrapper div and rebuild the entire table structure
+        const tableWrapper = tableContainer.querySelector('div[style*="overflow-x"]');
+        if (tableWrapper) {
+            tableWrapper.innerHTML = `
+                <div style="max-height: calc(100vh - 400px); overflow-y: auto;">
+                    <table style="border-collapse: collapse; font-family: 'Open Sans', sans-serif; font-size: 13px; width: 100%; table-layout: fixed;">
+                        <thead>
+                            <tr style="background: #2c3e50; color: white; position: sticky; top: 0; z-index: 10;">
+                                ${Array.from(this.visibleColumns).map(col => {
+                // Skip paper_ID column for field tasks
+                if (col === 'paper_ID' && this.currentView === 'field') return '';
+
+                const displayName = this.getReadableColumnName(col);
+                const width = this.getColumnWidth(col);
+
+                return `<th style="padding: 10px 8px; text-align: left; font-weight: 600; width: ${width}; word-wrap: break-word; overflow-wrap: break-word;">${displayName}</th>`;
+            }).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${this.generateTableRows()}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
     }
 
     // Update filter options based on current filtered data
     updateFilterOptions() {
+        // Get the appropriate data based on current view
+        const currentData = this.currentView === 'field' ? this.fieldTasksData : this.allTasksData;
+
         // Store current selections
         const currentPaper = document.getElementById('filter-paper')?.value || '';
         const currentType = document.getElementById('filter-type')?.value || '';
@@ -595,14 +920,14 @@ class AllTasksViewer {
         const availableWhatCat = [...new Set(this.filteredData.map(row => row['What Cat.']))].filter(v => v).sort();
         const availableWhatSubcat = [...new Set(this.filteredData.map(row => row['What Subcat.']))].filter(v => v).sort();
 
-        // Get all possible options from all data
-        const allPapers = [...new Set(this.allTasksData.map(row => row.paper_ID))].filter(v => v).sort();
-        const allTypes = [...new Set(this.allTasksData.map(row => row['Task Type (network, geospatial, temporal, neither, all)']))].filter(v => v).sort();
-        const allArchetypes = [...new Set(this.allTasksData.map(row => row.Archetype))].filter(v => v).sort();
-        const allWhyL1 = [...new Set(this.allTasksData.map(row => row['Why L1 Action']))].filter(v => v).sort();
-        const allWhyL2 = [...new Set(this.allTasksData.map(row => row['Why L2 Action']))].filter(v => v).sort();
-        const allWhatCat = [...new Set(this.allTasksData.map(row => row['What Cat.']))].filter(v => v).sort();
-        const allWhatSubcat = [...new Set(this.allTasksData.map(row => row['What Subcat.']))].filter(v => v).sort();
+        // Get all possible options from current data source
+        const allPapers = [...new Set(currentData.map(row => row.paper_ID))].filter(v => v).sort();
+        const allTypes = [...new Set(currentData.map(row => row['Task Type (network, geospatial, temporal, neither, all)']))].filter(v => v).sort();
+        const allArchetypes = [...new Set(currentData.map(row => row.Archetype))].filter(v => v).sort();
+        const allWhyL1 = [...new Set(currentData.map(row => row['Why L1 Action']))].filter(v => v).sort();
+        const allWhyL2 = [...new Set(currentData.map(row => row['Why L2 Action']))].filter(v => v).sort();
+        const allWhatCat = [...new Set(currentData.map(row => row['What Cat.']))].filter(v => v).sort();
+        const allWhatSubcat = [...new Set(currentData.map(row => row['What Subcat.']))].filter(v => v).sort();
 
         // Helper function to update a select element
         const updateSelect = (id, allOptions, availableOptions, currentValue) => {
@@ -623,7 +948,9 @@ class AllTasksViewer {
         };
 
         // Update all selects
-        updateSelect('filter-paper', allPapers, availablePapers, currentPaper);
+        if (this.currentView !== 'field') {
+            updateSelect('filter-paper', allPapers, availablePapers, currentPaper);
+        }
         updateSelect('filter-type', allTypes, availableTypes, currentType);
         updateSelect('filter-archetype', allArchetypes, availableArchetypes, currentArchetype);
         updateSelect('filter-whyl1', allWhyL1, availableWhyL1, currentWhyL1);
@@ -636,7 +963,9 @@ class AllTasksViewer {
     clearFilters() {
         console.log('Clearing all filters');
         document.getElementById('search-all').value = '';
-        document.getElementById('filter-paper').value = '';
+        if (this.currentView !== 'field' && document.getElementById('filter-paper')) {
+            document.getElementById('filter-paper').value = '';
+        }
         document.getElementById('filter-type').value = '';
         document.getElementById('filter-archetype').value = '';
         document.getElementById('filter-whyl1').value = '';
@@ -644,8 +973,9 @@ class AllTasksViewer {
         document.getElementById('filter-whatcat').value = '';
         document.getElementById('filter-whatsubcat').value = '';
 
-        // Reset filtered data to all data
-        this.filteredData = [...this.allTasksData];
+        // Reset filtered data to appropriate data source
+        const currentData = this.currentView === 'field' ? this.fieldTasksData : this.allTasksData;
+        this.filteredData = [...currentData];
 
         // Update filter options to show all available
         this.updateFilterOptions();
