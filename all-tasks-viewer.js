@@ -561,18 +561,18 @@ class AllTasksViewer {
                     
                     <!-- Why L1 Filter -->
                     <div>
-                        <label style="display: block; font-size: 11px; font-weight: 600; color: #666; margin-bottom: 4px;">Why L1 Action</label>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: #666; margin-bottom: 4px;">Why High Action</label>
                         <select id="filter-whyl1" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; box-sizing: border-box;">
-                            <option value="">All L1 Actions</option>
+                            <option value="">All Why High Actions</option>
                             ${uniqueWhyL1.map(val => `<option value="${val}" ${val === currentWhyL1Value ? 'selected' : ''}>${val}</option>`).join('')}
                         </select>
                     </div>
                     
                     <!-- Why L2 Filter -->
                     <div>
-                        <label style="display: block; font-size: 11px; font-weight: 600; color: #666; margin-bottom: 4px;">Why L2 Action</label>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: #666; margin-bottom: 4px;">Why Low Action</label>
                         <select id="filter-whyl2" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; box-sizing: border-box;">
-                            <option value="">All L2 Actions</option>
+                            <option value="">All Why Low Actions</option>
                             ${uniqueWhyL2.map(val => `<option value="${val}" ${val === currentWhyL2Value ? 'selected' : ''}>${val}</option>`).join('')}
                         </select>
                     </div>
@@ -687,11 +687,11 @@ class AllTasksViewer {
             'Rule': 'Rule',
             'Archetype': 'Archetype',
             'WHY Details': 'Why Details',
-            'Why L1 Action': 'Why L1 Action',
-            'Why L2 Action': 'Why L2 Action',
-            'Why L3 Action': 'Why L3 Action',
-            'Why L1 Target': 'Why L1 Target',
-            'Why L2 Target': 'Why L2 Target',
+            'Why L1 Action': 'Why High Action',
+            'Why L2 Action': 'Why Low Action',
+            'Why L3 Action': 'Why Low Detail Action',
+            'Why L1 Target': 'Why High Target',
+            'Why L2 Target': 'Why Low Target',
             'HOW Encode': 'How Encode',
             'HOW Manipulate (Interactive)': 'How Manipulate',
             'HOW Facet (Dashboards/Multiple Views)': 'How Facet',
