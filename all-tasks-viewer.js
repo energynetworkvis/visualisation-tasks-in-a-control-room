@@ -309,8 +309,8 @@ class AllTasksViewer {
     async loadFieldTasks() {
         console.log('Loading field tasks...');
         try {
-            // Load from field_tasks.csv
-            const response = await fetch('field_tasks.csv');
+            // Load from field_tasks RR.csv
+            const response = await fetch('field_tasks RR.csv');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -320,7 +320,7 @@ class AllTasksViewer {
             console.log(`Loaded ${this.fieldTasksData.length} field tasks`);
         } catch (error) {
             console.error('Error loading field tasks:', error);
-            alert('Error loading field tasks data. Make sure field_tasks.csv is in the root directory.');
+            alert('Error loading field tasks data. Make sure field_tasks RR.csv is in the root directory.');
             this.fieldTasksData = [];
             this.filteredData = [];
         }
