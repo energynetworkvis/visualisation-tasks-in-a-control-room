@@ -193,6 +193,22 @@ class AllTasksViewer {
             }
         }
 
+        // Hide the evaluation method filters
+        const evalFilters = document.querySelector('#filters_eval');
+        if (evalFilters) {
+            evalFilters.style.display = 'none';
+            // Hide the paragraph before it
+            let prevP = evalFilters.previousElementSibling;
+            if (prevP && prevP.tagName === 'P') {
+                prevP.style.display = 'none';
+                // Hide the H3 before the paragraph
+                let prevH3 = prevP.previousElementSibling;
+                if (prevH3 && prevH3.tagName === 'H3') {
+                    prevH3.style.display = 'none';
+                }
+            }
+        }
+
         // Hide the "Select multiple data features" paragraph
         const controls = document.querySelector('#controls');
         if (controls) {
@@ -281,6 +297,21 @@ class AllTasksViewer {
             }
         }
 
+        // Hide the evaluation method filters
+        const evalFilters = document.querySelector('#filters_eval');
+        if (evalFilters) {
+            evalFilters.style.display = 'none';
+            // Hide the paragraph before it
+            let prevP = evalFilters.previousElementSibling;
+            if (prevP && prevP.tagName === 'P') {
+                prevP.style.display = 'none';
+                // Hide the H3 before the paragraph
+                let prevH3 = prevP.previousElementSibling;
+                if (prevH3 && prevH3.tagName === 'H3') {
+                    prevH3.style.display = 'none';
+                }
+            }
+        }
         // Hide the "Select multiple data features" paragraph
         const controls = document.querySelector('#controls');
         if (controls) {
@@ -359,6 +390,23 @@ class AllTasksViewer {
             let prevH3 = dataFilters.previousElementSibling;
             if (prevH3 && prevH3.tagName === 'H3') {
                 prevH3.style.display = '';
+            }
+        }
+
+
+        // Show the evaluation method filters
+        const evalFilters = document.querySelector('#filters_eval');
+        if (evalFilters) {
+            evalFilters.style.display = '';
+            // Show the paragraph before it
+            let prevP = evalFilters.previousElementSibling;
+            if (prevP && prevP.tagName === 'P') {
+                prevP.style.display = '';
+                // Show the H3 before the paragraph
+                let prevH3 = prevP.previousElementSibling;
+                if (prevH3 && prevH3.tagName === 'H3') {
+                    prevH3.style.display = '';
+                }
             }
         }
 
